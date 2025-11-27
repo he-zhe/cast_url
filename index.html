@@ -86,6 +86,23 @@
       color: var(--text);
       border-color: var(--border);
     }
+    button.loading {
+      position: relative;
+      padding-left: 40px;
+    }
+    button.loading::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(12, 19, 35, 0.3);
+      border-top-color: #0b1323;
+      border-radius: 50%;
+      transform: translateY(-50%);
+      animation: spin 0.8s linear infinite;
+    }
     button:disabled {
       opacity: 0.65;
       cursor: not-allowed;
@@ -114,6 +131,10 @@
       height: auto;
       display: block;
       background: #000;
+    }
+    @keyframes spin {
+      from { transform: translateY(-50%) rotate(0deg); }
+      to { transform: translateY(-50%) rotate(360deg); }
     }
     @media (max-width: 540px) {
       h1 { font-size: 22px; }
@@ -144,6 +165,7 @@
     const statusEl = document.getElementById("status");
     const player = document.getElementById("player");
     const CAST_SDK_URL = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
+    const defaultCastLabel = castBtn.textContent;
     let castReady = false;
     const logErr = (label, err) => {
       console.error(label, err, {
@@ -151,6 +173,12 @@
         description: err?.description,
         message: err?.message,
       });
+    };
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const setCastBusy = (isBusy, label) => {
+      castBtn.disabled = isBusy;
+      castBtn.classList.toggle("loading", isBusy);
+      castBtn.textContent = isBusy && label ? label : defaultCastLabel;
     };
 
     const guessContentType = (url) => {
@@ -183,6 +211,7 @@
       if (!session || typeof session.loadMedia !== "function") {
         logErr("No cast session available", session);
         setStatus("No cast session available. Try reconnecting.", true);
+        setCastBusy(false);
         return;
       }
       const mediaInfo = new chrome.cast.media.MediaInfo(mediaUrl, guessContentType(mediaUrl));
@@ -193,10 +222,14 @@
       request.autoplay = true;
 
       session.loadMedia(request).then(
-        () => setStatus("Casting: " + mediaUrl),
+        () => {
+          setCastBusy(false);
+          setStatus("Casting: " + mediaUrl);
+        },
         (err) => {
           logErr("Cast load error", err);
           setStatus("Cast load error: " + (err?.description || err), true);
+          setCastBusy(false);
         }
       );
     };
@@ -211,6 +244,7 @@
         setStatus("Cast SDK is still loading or unavailable.", true);
         return;
       }
+      setCastBusy(true, "Connecting...");
       const context = cast.framework.CastContext.getInstance();
       const session = context.getCurrentSession();
       if (session) {
@@ -218,16 +252,33 @@
         return;
       }
       try {
-        const newSession = await context.requestSession();
-        if (!newSession) {
-          setStatus("No cast session returned. Check device availability.", true);
+        await context.requestSession();
+        // Wait for the session to become ready with exponential backoff
+        let attempt = 0;
+        const maxAttempts = 5;
+        let readySession = null;
+        while (attempt <= maxAttempts) {
+          readySession = context.getCurrentSession();
+          if (readySession && typeof readySession.loadMedia === "function") {
+            break;
+          }
+          const delay = 200 * Math.pow(2, attempt);
+          setStatus("Waiting for cast session... (" + (attempt + 1) + "/" + (maxAttempts + 1) + ")", false);
+          setCastBusy(true, "Connecting...");
+          await wait(delay);
+          attempt += 1;
+        }
+        if (!readySession) {
+          setStatus("No cast session became ready. Check device availability.", true);
+          setCastBusy(false);
           return;
         }
-        loadOnCast(newSession, mediaUrl);
+        loadOnCast(readySession, mediaUrl);
       } catch (err) {
         logErr("Cast session request failed", err);
         const details = err?.code ? `${err.code}: ${err?.message || err}` : (err?.message || err);
         setStatus("Could not start cast: " + details, true);
+        setCastBusy(false);
       }
     };
 

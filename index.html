@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Cast Link</title>
+  <link rel="icon" href="favicon.ico" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #0c1220;
+      --panel: #141c2f;
+      --accent: #4fd1c5;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(120% 120% at 15% 20%, rgba(79, 209, 197, 0.12), transparent),
+                  radial-gradient(100% 100% at 80% 10%, rgba(125, 92, 255, 0.12), transparent),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .card {
+      width: min(720px, 100%);
+      background: linear-gradient(145deg, #121a2c, #0f1729);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      letter-spacing: -0.02em;
+    }
+    p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 12px 0 18px;
+    }
+    input[type="url"] {
+      flex: 1;
+      min-width: 260px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0b1323;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    input[type="url"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.2);
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #0b1323;
+      background: var(--accent);
+      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      min-width: 120px;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    button:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(79, 209, 197, 0.25);
+    }
+    .status {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .status strong {
+      color: var(--text);
+    }
+    .video-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0b1323;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #000;
+    }
+    @media (max-width: 540px) {
+      h1 { font-size: 22px; }
+      button { width: 100%; }
+      .row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Cast any link</h1>
+    <p>Paste a direct media URL (mp4, webm, m3u8, mpd, etc.), then cast to a Chromecast device or play locally.</p>
+    <div class="row">
+      <input id="mediaUrl" type="url" placeholder="https://example.com/video.m3u8" autocomplete="off" />
+      <button id="castBtn">Cast</button>
+      <button id="playBtn" class="secondary">Play locally</button>
+    </div>
+    <div class="status" id="status">Waiting for a URL.</div>
+    <div class="video-wrap" aria-label="Preview player">
+      <video id="player" controls playsinline></video>
+    </div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById("mediaUrl");
+    const castBtn = document.getElementById("castBtn");
+    const playBtn = document.getElementById("playBtn");
+    const statusEl = document.getElementById("status");
+    const player = document.getElementById("player");
+    const CAST_SDK_URL = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
+    let castReady = false;
+    const logErr = (label, err) => {
+      console.error(label, err, {
+        code: err?.code,
+        description: err?.description,
+        message: err?.message,
+      });
+    };
+
+    const guessContentType = (url) => {
+      const clean = url.split("?")[0].toLowerCase();
+      if (clean.endsWith(".m3u8")) return "application/vnd.apple.mpegurl";
+      if (clean.endsWith(".mpd")) return "application/dash+xml";
+      if (clean.endsWith(".webm")) return "video/webm";
+      if (clean.endsWith(".mp4")) return "video/mp4";
+      if (clean.endsWith(".mp3")) return "audio/mpeg";
+      return "video/mp4";
+    };
+
+    const setStatus = (msg, isError = false) => {
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? "#f87171" : "var(--muted)";
+    };
+
+    const loadLocally = () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        setStatus("Add a media URL first.", true);
+        return;
+      }
+      player.src = url;
+      player.play().catch(() => {});
+      setStatus("Playing locally.");
+    };
+
+    const loadOnCast = (session, mediaUrl) => {
+      if (!session || typeof session.loadMedia !== "function") {
+        logErr("No cast session available", session);
+        setStatus("No cast session available. Try reconnecting.", true);
+        return;
+      }
+      const mediaInfo = new chrome.cast.media.MediaInfo(mediaUrl, guessContentType(mediaUrl));
+      mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+      mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+
+      const request = new chrome.cast.media.LoadRequest(mediaInfo);
+      request.autoplay = true;
+
+      session.loadMedia(request).then(
+        () => setStatus("Casting: " + mediaUrl),
+        (err) => {
+          logErr("Cast load error", err);
+          setStatus("Cast load error: " + (err?.description || err), true);
+        }
+      );
+    };
+
+    const startCasting = async () => {
+      const mediaUrl = urlInput.value.trim();
+      if (!mediaUrl) {
+        setStatus("Add a media URL first.", true);
+        return;
+      }
+      if (!castReady) {
+        setStatus("Cast SDK is still loading or unavailable.", true);
+        return;
+      }
+      const context = cast.framework.CastContext.getInstance();
+      const session = context.getCurrentSession();
+      if (session) {
+        loadOnCast(session, mediaUrl);
+        return;
+      }
+      try {
+        const newSession = await context.requestSession();
+        if (!newSession) {
+          setStatus("No cast session returned. Check device availability.", true);
+          return;
+        }
+        loadOnCast(newSession, mediaUrl);
+      } catch (err) {
+        logErr("Cast session request failed", err);
+        const details = err?.code ? `${err.code}: ${err?.message || err}` : (err?.message || err);
+        setStatus("Could not start cast: " + details, true);
+      }
+    };
+
+    // Cast sender bootstrap
+    window.__onGCastApiAvailable = function(isAvailable, errorInfo) {
+      if (!isAvailable) {
+        logErr("Cast API unavailable", errorInfo);
+        setStatus("Cast API unavailable: " + (errorInfo || "not supported"), true);
+        castBtn.disabled = true;
+        return;
+      }
+      if (cast?.framework?.setLoggerLevel) {
+        cast.framework.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+      }
+      castReady = true;
+      const context = cast.framework.CastContext.getInstance();
+      context.setOptions({
+        receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+      });
+      context.addEventListener(
+        cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+        (event) => {
+          console.info("Cast session state", event.sessionState, event);
+        }
+      );
+      setStatus("Ready to cast. Paste a URL to begin.");
+      castBtn.disabled = false;
+    };
+
+    const isAllowedForCast = () => {
+      if (location.protocol === "https:") return true;
+      if (location.protocol === "http:" && (location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+        return true;
+      }
+      return false;
+    };
+
+    const loadCastSdk = () => {
+      if (!isAllowedForCast()) {
+        setStatus("Cast SDK needs https or http://localhost (file:// won't work).", true);
+        castBtn.disabled = true;
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = CAST_SDK_URL;
+      script.async = true;
+      script.onerror = () => {
+        console.error("Failed to load Cast SDK");
+        setStatus("Failed to load Cast SDK.", true);
+        castBtn.disabled = true;
+      };
+      document.head.appendChild(script);
+    };
+
+    const prefillFromQuery = () => {
+      const params = new URLSearchParams(location.search);
+      const fromQuery = params.get("src") || params.get("url");
+      if (fromQuery) {
+        urlInput.value = fromQuery;
+        setStatus("URL prefilled from link.");
+        if (params.get("autoplay") === "1") {
+          loadLocally();
+        }
+      }
+    };
+
+    castBtn.addEventListener("click", startCasting);
+    playBtn.addEventListener("click", loadLocally);
+    urlInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") startCasting();
+    });
+    castBtn.disabled = true;
+    loadCastSdk();
+    prefillFromQuery();
+  </script>
+</body>
+</html>

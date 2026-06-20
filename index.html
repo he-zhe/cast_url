@@ -8,84 +8,134 @@
   <style>
     :root {
       color-scheme: light;
-      --bg: #0c1220;
-      --panel: #141c2f;
+      --bg: #0b1020;
+      --panel: #131c30;
+      --panel-2: #0f1729;
       --accent: #4fd1c5;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --border: #1f2937;
+      --accent-2: #7d5cff;
+      --text: #e6edf7;
+      --muted: #8b9bb4;
+      --border: #233049;
+      --danger: #f87171;
+      --ok: #34d399;
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
-      background: radial-gradient(120% 120% at 15% 20%, rgba(79, 209, 197, 0.12), transparent),
-                  radial-gradient(100% 100% at 80% 10%, rgba(125, 92, 255, 0.12), transparent),
-                  var(--bg);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(60% 60% at 12% 8%, rgba(79, 209, 197, 0.16), transparent 70%),
+        radial-gradient(55% 55% at 88% 4%, rgba(125, 92, 255, 0.18), transparent 70%),
+        radial-gradient(80% 80% at 50% 110%, rgba(79, 209, 197, 0.08), transparent 70%),
+        var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 32px 16px;
+      padding: 40px 16px;
+      -webkit-font-smoothing: antialiased;
     }
     .card {
       width: min(720px, 100%);
-      background: linear-gradient(145deg, #121a2c, #0f1729);
+      background: linear-gradient(160deg, #15203a 0%, #0f1729 100%);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+    .logo {
+      flex: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.22), rgba(125, 92, 255, 0.22));
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+    .logo svg { width: 24px; height: 24px; }
     h1 {
-      margin: 0 0 8px;
-      font-size: 26px;
+      margin: 0;
+      font-size: 24px;
       letter-spacing: -0.02em;
+      line-height: 1.1;
     }
-    p {
-      margin: 0 0 16px;
+    .lead {
+      margin: 4px 0 20px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.55;
+      font-size: 14.5px;
     }
     .row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
-      margin: 12px 0 18px;
+      margin: 0 0 14px;
+    }
+    .input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .input-wrap > svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      pointer-events: none;
     }
     input[type="url"] {
-      flex: 1;
-      min-width: 260px;
-      padding: 14px 16px;
+      width: 100%;
+      padding: 14px 16px 14px 42px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: #0b1323;
       color: var(--text);
       font-size: 15px;
       outline: none;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
     }
+    input[type="url"]::placeholder { color: #5f6f87; }
     input[type="url"]:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.2);
+      box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.22);
     }
     button {
       cursor: pointer;
       border: 1px solid transparent;
       border-radius: 12px;
-      padding: 14px 18px;
+      padding: 14px 20px;
       font-size: 15px;
       font-weight: 600;
       letter-spacing: 0.01em;
       color: #0b1323;
-      background: var(--accent);
-      transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+      background: linear-gradient(180deg, #5bd9cd, #3fb9ad);
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
       min-width: 120px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
+    button svg { width: 18px; height: 18px; }
     button.secondary {
       background: transparent;
       color: var(--text);
       border-color: var(--border);
     }
+    button.secondary:hover { background: rgba(255, 255, 255, 0.04); }
     button.loading {
       position: relative;
       padding-left: 40px;
@@ -104,27 +154,119 @@
       animation: spin 0.8s linear infinite;
     }
     button:disabled {
-      opacity: 0.65;
+      opacity: 0.6;
       cursor: not-allowed;
+      filter: saturate(0.7);
     }
     button:not(:disabled):hover {
       transform: translateY(-1px);
-      box-shadow: 0 12px 30px rgba(79, 209, 197, 0.25);
+      box-shadow: 0 12px 30px rgba(79, 209, 197, 0.28);
     }
+    button:not(:disabled):active { transform: translateY(0); }
+
     .status {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
       min-height: 22px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.5;
+      margin: 6px 0 4px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
-    .status strong {
-      color: var(--text);
+    .dot {
+      flex: none;
+      width: 8px;
+      height: 8px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      box-shadow: 0 0 0 0 currentColor;
+      transition: background 200ms ease;
     }
-    .video-wrap {
-      margin-top: 12px;
+    .status.ok .dot { background: var(--ok); }
+    .status.err .dot { background: var(--danger); }
+    .status.ok { color: var(--text); }
+    .status.err { color: var(--danger); }
+    .status strong { color: var(--text); }
+
+    .now-playing {
+      display: none;
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b1323;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    .now-playing .label {
+      color: var(--accent);
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .now-playing.visible { display: block; }
+
+    details.advanced {
+      margin-top: 18px;
       border: 1px solid var(--border);
       border-radius: 12px;
+      background: rgba(11, 19, 35, 0.6);
       overflow: hidden;
-      background: #0b1323;
+    }
+    details.advanced > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      user-select: none;
+    }
+    details.advanced > summary::-webkit-details-marker { display: none; }
+    details.advanced > summary .chev {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      transition: transform 180ms ease;
+    }
+    details.advanced[open] > summary .chev { transform: rotate(180deg); }
+    details.advanced > summary .summary-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    details.advanced > summary .summary-left svg {
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+    }
+    .advanced-body {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .advanced-body .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .video-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
     }
     video {
       width: 100%;
@@ -137,25 +279,78 @@
       to { transform: translateY(-50%) rotate(360deg); }
     }
     @media (max-width: 540px) {
-      h1 { font-size: 22px; }
-      button { width: 100%; }
+      .card { padding: 22px; }
+      h1 { font-size: 21px; }
       .row { flex-direction: column; }
+      button { width: 100%; }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Cast any link</h1>
-    <p>Paste a direct media URL (mp4, webm, m3u8, mpd, etc.), then cast to a Chromecast device or play locally.</p>
+    <div class="head">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 17.45V21h16v-3.55" />
+          <path d="M12 3v10" />
+          <path d="m8 9 4 4 4-4" />
+        </svg>
+      </div>
+      <h1>Cast any link</h1>
+    </div>
+    <p class="lead">Paste a direct media URL (mp4, webm, m3u8, mpd, etc.) and cast it to a Chromecast device on your network.</p>
+
     <div class="row">
-      <input id="mediaUrl" type="url" placeholder="https://example.com/video.m3u8" autocomplete="off" />
-      <button id="castBtn">Cast</button>
-      <button id="playBtn" class="secondary">Play locally</button>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+        <input id="mediaUrl" type="url" placeholder="https://example.com/video.m3u8" autocomplete="off" />
+      </div>
+      <button id="castBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 8.5a16 16 0 0 1 20 0" />
+          <path d="M5 12.5a10 10 0 0 1 14 0" />
+          <path d="M8.5 16a5 5 0 0 1 7 0" />
+          <circle cx="12" cy="19.5" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+        <span>Cast</span>
+      </button>
     </div>
-    <div class="status" id="status">Waiting for a URL.</div>
-    <div class="video-wrap" aria-label="Preview player">
-      <video id="player" controls playsinline></video>
-    </div>
+
+    <div class="status" id="status"><span class="dot"></span><span class="msg">Waiting for a URL.</span></div>
+    <div class="now-playing" id="nowPlaying"><span class="label">Now playing</span><span id="nowUrl"></span></div>
+
+    <details class="advanced">
+      <summary>
+        <span class="summary-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M4 12a8 8 0 0 1 8-8" />
+            <path d="M12 20a8 8 0 0 0 8-8" />
+          </svg>
+          Advanced
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </summary>
+      <div class="advanced-body">
+        <p class="hint">Play the media directly in this browser instead of casting to a device.</p>
+        <div class="row" style="margin:0;">
+          <button id="playBtn" class="secondary" style="width:auto;min-width:auto;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="none" />
+            </svg>
+            <span>Play locally</span>
+          </button>
+        </div>
+        <div class="video-wrap" aria-label="Preview player">
+          <video id="player" controls playsinline></video>
+        </div>
+      </div>
+    </details>
   </div>
 
   <script>
@@ -163,9 +358,12 @@
     const castBtn = document.getElementById("castBtn");
     const playBtn = document.getElementById("playBtn");
     const statusEl = document.getElementById("status");
+    const statusMsg = statusEl.querySelector(".msg");
+    const nowPlaying = document.getElementById("nowPlaying");
+    const nowUrl = document.getElementById("nowUrl");
     const player = document.getElementById("player");
     const CAST_SDK_URL = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
-    const defaultCastLabel = castBtn.textContent;
+    const defaultCastLabel = "Cast";
     let castReady = false;
     const logErr = (label, err) => {
       console.error(label, err, {
@@ -178,7 +376,7 @@
     const setCastBusy = (isBusy, label) => {
       castBtn.disabled = isBusy;
       castBtn.classList.toggle("loading", isBusy);
-      castBtn.textContent = isBusy && label ? label : defaultCastLabel;
+      castBtn.querySelector("span").textContent = isBusy && label ? label : defaultCastLabel;
     };
 
     const guessContentType = (url) => {
@@ -191,26 +389,38 @@
       return "video/mp4";
     };
 
-    const setStatus = (msg, isError = false) => {
-      statusEl.textContent = msg;
-      statusEl.style.color = isError ? "#f87171" : "var(--muted)";
+    const setStatus = (msg, kind = "") => {
+      statusMsg.textContent = msg;
+      statusEl.classList.remove("ok", "err");
+      if (kind === "error") statusEl.classList.add("err");
+      else if (kind === "ok") statusEl.classList.add("ok");
+    };
+
+    const showNowPlaying = (url) => {
+      if (!url) {
+        nowPlaying.classList.remove("visible");
+        return;
+      }
+      nowUrl.textContent = url;
+      nowPlaying.classList.add("visible");
     };
 
     const loadLocally = () => {
       const url = urlInput.value.trim();
       if (!url) {
-        setStatus("Add a media URL first.", true);
+        setStatus("Add a media URL first.", "error");
         return;
       }
       player.src = url;
       player.play().catch(() => {});
-      setStatus("Playing locally.");
+      setStatus("Playing locally.", "ok");
+      showNowPlaying(url);
     };
 
     const loadOnCast = (session, mediaUrl) => {
       if (!session || typeof session.loadMedia !== "function") {
         logErr("No cast session available", session);
-        setStatus("No cast session available. Try reconnecting.", true);
+        setStatus("No cast session available. Try reconnecting.", "error");
         setCastBusy(false);
         return;
       }
@@ -224,11 +434,12 @@
       session.loadMedia(request).then(
         () => {
           setCastBusy(false);
-          setStatus("Casting: " + mediaUrl);
+          setStatus("Casting to device.", "ok");
+          showNowPlaying(mediaUrl);
         },
         (err) => {
           logErr("Cast load error", err);
-          setStatus("Cast load error: " + (err?.description || err), true);
+          setStatus("Cast load error: " + (err?.description || err), "error");
           setCastBusy(false);
         }
       );
@@ -237,11 +448,11 @@
     const startCasting = async () => {
       const mediaUrl = urlInput.value.trim();
       if (!mediaUrl) {
-        setStatus("Add a media URL first.", true);
+        setStatus("Add a media URL first.", "error");
         return;
       }
       if (!castReady) {
-        setStatus("Cast SDK is still loading or unavailable.", true);
+        setStatus("Cast SDK is still loading or unavailable.", "error");
         return;
       }
       setCastBusy(true, "Connecting...");
@@ -263,13 +474,13 @@
             break;
           }
           const delay = 200 * Math.pow(2, attempt);
-          setStatus("Waiting for cast session... (" + (attempt + 1) + "/" + (maxAttempts + 1) + ")", false);
+          setStatus("Waiting for cast session... (" + (attempt + 1) + "/" + (maxAttempts + 1) + ")");
           setCastBusy(true, "Connecting...");
           await wait(delay);
           attempt += 1;
         }
         if (!readySession) {
-          setStatus("No cast session became ready. Check device availability.", true);
+          setStatus("No cast session became ready. Check device availability.", "error");
           setCastBusy(false);
           return;
         }
@@ -277,7 +488,7 @@
       } catch (err) {
         logErr("Cast session request failed", err);
         const details = err?.code ? `${err.code}: ${err?.message || err}` : (err?.message || err);
-        setStatus("Could not start cast: " + details, true);
+        setStatus("Could not start cast: " + details, "error");
         setCastBusy(false);
       }
     };
@@ -286,7 +497,7 @@
     window.__onGCastApiAvailable = function(isAvailable, errorInfo) {
       if (!isAvailable) {
         logErr("Cast API unavailable", errorInfo);
-        setStatus("Cast API unavailable: " + (errorInfo || "not supported"), true);
+        setStatus("Cast API unavailable: " + (errorInfo || "not supported"), "error");
         castBtn.disabled = true;
         return;
       }
@@ -305,7 +516,7 @@
           console.info("Cast session state", event.sessionState, event);
         }
       );
-      setStatus("Ready to cast. Paste a URL to begin.");
+      setStatus("Ready to cast. Paste a URL to begin.", "ok");
       castBtn.disabled = false;
     };
 
@@ -319,7 +530,7 @@
 
     const loadCastSdk = () => {
       if (!isAllowedForCast()) {
-        setStatus("Cast SDK needs https or http://localhost (file:// won't work).", true);
+        setStatus("Cast SDK needs https or http://localhost (file:// won't work).", "error");
         castBtn.disabled = true;
         return;
       }
@@ -328,7 +539,7 @@
       script.async = true;
       script.onerror = () => {
         console.error("Failed to load Cast SDK");
-        setStatus("Failed to load Cast SDK.", true);
+        setStatus("Failed to load Cast SDK.", "error");
         castBtn.disabled = true;
       };
       document.head.appendChild(script);
@@ -339,7 +550,7 @@
       const fromQuery = params.get("src") || params.get("url");
       if (fromQuery) {
         urlInput.value = fromQuery;
-        setStatus("URL prefilled from link.");
+        setStatus("URL prefilled from link.", "ok");
         if (params.get("autoplay") === "1") {
           loadLocally();
         }
